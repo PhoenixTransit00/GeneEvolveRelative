@@ -234,7 +234,7 @@ INT initsave(char path[],INT numgen)
     fprintf(file,"ID1.generation ID2.generation #of_relatives #closest_degree\n");
 	fflush(file);
     fclose (file);
-}
+} 
 //
 //  store in relative.txt the relative between indiv1 and indiv2
 //		
@@ -244,10 +244,17 @@ INT saverelative(char path[],INT indiv1,INT indiv2,INT nbrelative,INT lowestdegr
 	strcpy (filename,path);
 	strcat(filename,".relatives.txt");
     if ((file = fopen(filename, "a")) == NULL) return 1;
-    fprintf(file,"%d %d %d %d %d\n",indiv1+1-maxpeople[getgeneration(indiv1,maxpeople)],
+    if (getgeneration(indiv1,maxpeople)==getgeneration(indiv2,maxpeople))
+	{	fprintf(file,"%d %d %d %d %d\n",indiv1+1-maxpeople[getgeneration(indiv1,maxpeople)],
 				indiv2+1-maxpeople[getgeneration(indiv2,maxpeople)],
 				nbrelative,
-				lowestdegree);
+				1+(lowestdegree-1)*2);
+	} else
+	{	fprintf(file,"%d %d %d %d %d\n",indiv1+1-maxpeople[getgeneration(indiv1,maxpeople)],
+				indiv2+1-maxpeople[getgeneration(indiv2,maxpeople)],
+				nbrelative,
+				1+(lowestdegree-1)+(lowestdegree-2>0?lowestdegree-2:0));	
+	};
 	fclose (file);
 }
 
@@ -263,13 +270,13 @@ INT saveallrelative(char path[],INT indiv1,INT lastgeneration,struct structrelat
     if ((file = fopen(filename, "a")) == NULL) return 1;
     INT indiv2;
 	for(indiv2=1+indiv1;indiv2<maxpeople[lastgeneration+1] ;indiv2++) 
-	{	if (ptrelative->numrelative[indiv2]) fprintf(file,"%d.%d %d.%d %d %d\n",
+	{	if (ptrelative->numrelative[indiv2]) 	fprintf(file,"%d.%d %d.%d %d %d\n",
 				indiv1+1-maxpeople[getgeneration(indiv1,maxpeople)],
 				getgeneration(indiv1,maxpeople),
 				indiv2+1-maxpeople[getgeneration(indiv2,maxpeople)],
 				getgeneration(indiv2,maxpeople),
 				ptrelative->numrelative[indiv2],
-				lastgeneration - ptrelative->highestgen[indiv2]);
+				1+(lastgeneration - ptrelative->highestgen[indiv2] - 1)*2   );
 	}
 	if (numgenpeople>1)
 	{	for(indiv2=maxpeople[lastgeneration-1];indiv2<maxpeople[lastgeneration] ;indiv2++) 
@@ -279,7 +286,9 @@ INT saveallrelative(char path[],INT indiv1,INT lastgeneration,struct structrelat
 				indiv2+1-maxpeople[getgeneration(indiv2,maxpeople)],
 				getgeneration(indiv2,maxpeople),
 				ptrelative->numrelative[indiv2],
-				lastgeneration - ptrelative->highestgen[indiv2]);
+				1 + 
+					(lastgeneration - ptrelative->highestgen[indiv2]-1) +
+					(lastgeneration - ptrelative->highestgen[indiv2]-2>0?lastgeneration - ptrelative->highestgen[indiv2]-2:0));	
 		};	
 	};
 	fclose (file);
@@ -342,12 +351,19 @@ int main(int argc, char *argv[])
 	//
 	INT degree=maxdegree+numgen-1;
 	generation=lastgeneration;
+	readfile(path,generation,people,maxpeople);
+	generation=(generation>1)?generation-2:0;
+	degree=(degree>1)?degree-2:0;
+	if (numgen>1) 
+	{	readfile(path,generation+1,people,maxpeople);
+		generation=(generation>1)?generation-1:0;
+		degree=(degree>1)?degree-1:0;
+	}
 	while (degree>0)
 	{	if (generation>0) readfile(path,generation,people,maxpeople);
 		degree=(degree>1)?degree-2:0;
 		generation=(generation>1)?generation-2:0;
 	};
-	if (numgen>1) readfile(path,lastgeneration-1,people,maxpeople);
 	//
 	// initsave creat the file relative.txt
 	//
@@ -409,4 +425,4 @@ int main(int argc, char *argv[])
 	float elapsed_secs = (float)(end - begin) ;
     printf("\nTotal time:%f\n cpu click so %f seconds",elapsed_secs,elapsed_secs/CLOCKS_PER_SEC );
 	return (0);
-}
+} 
